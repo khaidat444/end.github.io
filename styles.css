@@ -1,0 +1,44 @@
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom right, #1a1a1a, #0d0d0d);
+  color: #e0e0e0;
+}
+
+.tab-btn {
+  transition: background-color 0.3s ease;
+}
+
+.tab-btn.active {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.rank {
+  display: inline-block;
+  width: 2rem;
+  text-align: center;
+}
+
+.rank-1 { color: #ffd700; font-weight: bold; }
+.rank-2 { color: #c0c0c0; font-weight: bold; }
+.rank-3 { color: #cd7f32; font-weight: bold; }
+.rank-4 { color: #a9a9a9; }
+
+.player-info img {
+  vertical-align: middle;
+  border-radius: 50%;
+}
+
+.region {
+  font-size: 0.9rem;
+}
+
+#playerDetailModal, #addModal, #addRankModal {
+  z-index: 1000;
+}
+
+#playerDetailModal .hover\:scale-100:hover, #addModal .hover\:scale-100:hover, #addRankModal .hover\:scale-100:hover {
+  transform: scale(1.05);
+}

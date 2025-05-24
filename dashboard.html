@@ -1,0 +1,197 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Team Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="storage.js" defer></script>
+  <script src="dashboard.js" defer></script>
+</head>
+<body class="flex flex-col min-h-screen text-white bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+  <div class="relative z-10 w-full max-w-7xl mx-auto p-6">
+    <!-- Header -->
+    <div class="bg-gray-900 p-5 rounded-t-2xl shadow-2xl flex justify-between items-center transform transition-all duration-300 hover:shadow-[0_0_20px_rgba(59,130,246,0.5)]">
+      <div class="text-3xl font-extrabold text-blue-400 tracking-wide">MCTIERS</div>
+      <div class="flex space-x-5">
+        <a href="#" class="text-gray-200 hover:text-blue-400 transition duration-200 font-semibold">Home</a>
+        <a href="#" class="text-gray-200 hover:text-blue-400 transition duration-200 font-semibold">Rankings</a>
+        <a href="#" class="text-gray-200 hover:text-blue-400 transition duration-200 font-semibold">Discords</a>
+        <a href="#" id="logoutBtn" class="text-gray-200 hover:text-red-400 transition duration-200 font-semibold">Logout</a>
+      </div>
+      <div class="flex items-center space-x-3">
+        <input type="text" placeholder="Search player..." class="px-4 py-2 bg-gray-800 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-200 font-semibold">Search</button>
+        <button onclick="toggleTheme()" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-semibold">Toggle Theme</button>
+        <button id="toggleMusicBtn" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition duration-200 font-semibold">Toggle Music</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-gray-800 p-3 rounded-b-2xl flex space-x-3 overflow-x-auto">
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="overall" onclick="window.location.href='overall.html'">Overall 🏆</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="ltms" onclick="window.location.href='ltms.html'">LTMS ⏱️</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="vanilla" onclick="window.location.href='vanilla.html'">Vanilla 🍃</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="uhc" onclick="window.location.href='uhc.html'">UHC 🪓</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="crys" onclick="window.location.href='crys.html'">Crys 💎</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="ntrp" onclick="window.location.href='ntrp.html'">NTRP ⚡</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="skywars" onclick="window.location.href='skywars.html'">SkyWars 🌌</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="bedwars" onclick="window.location.href='bedwars.html'">BedWars 🛏️</button>
+      <button class="tab-btn bg-gray-700 hover:bg-gray-600 px-5 py-2 rounded-lg transition duration-200 font-medium" data-tab="survivalgames" onclick="window.location.href='survivalgames.html'">Survival Games 🏹</button>
+    </div>
+
+    <!-- Sections -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+      <!-- Overall Ranking Section -->
+      <div class="bg-gray-800 p-5 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]" id="overallSection" data-section="overall">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-2xl font-bold text-gray-200">Overall Ranking 🏆</h2>
+        </div>
+        <ul class="space-y-2 text-gray-300" id="overallRankingList">
+          <!-- Players will be populated by JS -->
+        </ul>
+      </div>
+
+      <!-- Add Rank Section -->
+      <div class="bg-gray-800 p-5 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]" data-section="add-rank">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-2xl font-bold text-gray-200">Add Your Rank 🏅</h2>
+          <button onclick="showAddRankModal()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition duration-200 font-semibold">+</button>
+        </div>
+        <ul class="space-y-2 text-gray-300" id="customRanksList">
+          <!-- Custom ranks will be populated by JS -->
+        </ul>
+      </div>
+
+      <!-- Event Section -->
+      <div class="bg-gray-800 p-5 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]" data-section="event">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-2xl font-bold text-gray-200">Events 🎉</h2>
+          <button onclick="showAddModal('event')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition duration-200 font-semibold">+</button>
+        </div>
+        <ul class="space-y-2 text-gray-300" id="eventList">
+          <li>🎈 PvP Tournament - 01/06/2025</li>
+          <li>🏰 Castle Siege Event - 15/06/2025</li>
+        </ul>
+      </div>
+
+      <!-- Members Section -->
+      <div class="bg-gray-800 p-5 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]" data-section="members">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-2xl font-bold text-gray-200">Thành Viên 👥</h2>
+          <button onclick="showAddModal('members')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition duration-200 font-semibold">+</button>
+        </div>
+        <ul class="space-y-2 text-gray-300" id="membersList">
+          <li>👑 Player1 - Owner</li>
+          <li>🛡️ Player2 - Admin</li>
+          <li>⚔️ Player3 - Member</li>
+        </ul>
+      </div>
+
+      <!-- Home Section -->
+      <div class="bg-gray-800 p-5 rounded-xl shadow-lg transform transition-all duration-300 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]" data-section="home">
+        <div class="flex justify-between items-center mb-3">
+          <h2 class="text-2xl font-bold text-gray-200">Home 🏠</h2>
+          <button onclick="showAddModal('home')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg transition duration-200 font-semibold">+</button>
+        </div>
+        <ul class="space-y-2 text-gray-300">
+          <li>Welcome to the Minecraft team dashboard!</li>
+          <li>Server IP: mc.yourserver.com</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Player Detail Modal -->
+    <div id="playerDetailModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden transition-opacity duration-500">
+      <div class="relative z-20 w-full max-w-md p-6 bg-gray-800 rounded-xl shadow-2xl backdrop-blur-lg border border-gray-700 transform transition-all duration-500 scale-95 hover:scale-100">
+        <h2 id="playerDetailTitle" class="text-xl font-bold text-gray-200 mb-4"></h2>
+        <div id="playerDetailContent" class="text-gray-300"></div>
+        <button onclick="hidePlayerDetailModal()" class="mt-4 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition duration-200 font-semibold">Close</button>
+      </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div id="addModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden transition-opacity duration-500">
+      <div class="relative z-20 w-full max-w-md p-6 bg-white rounded-xl shadow-2xl backdrop-blur-lg bg-opacity-95 border border-gray-200 transform transition-all duration-500 scale-95 hover:scale-100">
+        <h2 id="modalTitle" class="text-xl font-bold text-gray-800 mb-4"></h2>
+        <div class="space-y-4">
+          <input id="addInput" class="w-full px-4 py-3 text-gray-800 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200" type="text" placeholder="Enter details" required>
+          <div class="flex justify-end space-x-2">
+            <button type="button" onclick="hideAddModal()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-400 transition duration-200">Cancel</button>
+            <button onclick="handleAddItem()" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Rank Modal -->
+    <div id="addRankModal" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center hidden transition-opacity duration-500">
+      <div class="relative z-20 w-full max-w-md p-6 bg-white rounded-xl shadow-2xl backdrop-blur-lg bg-opacity-95 border border-gray-200 transform transition-all duration-500 scale-95 hover:scale-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Add Custom Rank</h2>
+        <div class="space-y-4">
+          <input id="rankTier" class="w-full px-4 py-3 text-gray-800 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200" type="text" placeholder="Enter tier (e.g., HT1)" required>
+          <select id="rankCategory" class="w-full px-4 py-3 text-gray-800 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-200">
+            <option value="overall">Overall 🏆</option>
+            <option value="ltms">LTMS ⏱️</option>
+            <option value="vanilla">Vanilla 🍃</option>
+            <option value="uhc">UHC 🪓</option>
+            <option value="crys">Crys 💎</option>
+            <option value="ntrp">NTRP ⚡</option>
+            <option value="skywars">SkyWars 🌌</option>
+            <option value="bedwars">BedWars 🛏️</option>
+            <option value="survivalgames">Survival Games 🏹</option>
+          </select>
+          <div class="flex justify-end space-x-2">
+            <button type="button" onclick="hideAddRankModal()" class="bg-gray-300 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-400 transition duration-200">Cancel</button>
+            <button onclick="handleAddRank()" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200">Add Rank</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <audio id="backgroundMusic" loop autoplay>
+    <source src="background-music.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+</body>
+</html>
